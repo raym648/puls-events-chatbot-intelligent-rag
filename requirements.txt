@@ -1,7 +1,7 @@
 # puls-events-chatbot-intelligent-rag/requirements.txt
 
 # Framework RAG
-langchain==0.1.16
+langchain==0.2.5
 
 # Vector database (compatible Python 3.10+)
 faiss-cpu==1.13.0
