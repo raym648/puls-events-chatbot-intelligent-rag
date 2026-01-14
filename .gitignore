@@ -1,0 +1,16 @@
+
+# Environnement virtuel
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Fichiers secrets
+.env
+
+# OS
+.DS_Store
+
+# Notebooks
+.ipynb_checkpoints

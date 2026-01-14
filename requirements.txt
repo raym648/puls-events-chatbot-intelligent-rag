@@ -1,0 +1,27 @@
+# puls-events-chatbot-intelligent-rag/requirements.txt
+
+# Framework RAG
+langchain==0.1.16
+
+# Vector database
+faiss-cpu==1.7.4
+
+# Embeddings open-source
+sentence-transformers==2.2.2
+
+# HuggingFace interface
+huggingface-hub==0.20.3
+
+# API Mistral
+mistralai==0.1.3
+
+# API backend
+fastapi==0.110.0
+uvicorn==0.27.1
+
+# Data processing
+pandas==2.2.1
+numpy==1.26.4
+
+# Env variables
+python-dotenv==1.0.1
