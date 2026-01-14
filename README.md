@@ -1,5 +1,12 @@
 # Puls-Events – Système RAG pour recommandations culturelles
 
+**Projet-7 - Concevez et déployez un système RAG**
+
+* **✍️ Auteur :** *[Raymond Francius]* 
+* **📚 Rôle :** *[Apprenant - Promotion Sept-2025]* — **Engineer AI** — **Openclassrooms**  
+* 🗓️ **Date de mise à jour :** *[14-01-2026]*
+
+
 ## Objectif
 Ce projet est un POC démontrant la faisabilité d’un **assistant IA** capable de recommander des événements culturels à partir de données OpenAgenda en utilisant une **architecture RAG**.
 
@@ -20,7 +27,12 @@ git clone <repo>
 cd puls-events-chatbot-intelligent-rag
 python -m venv env
 source env/bin/activate
+
+pip uninstall -y faiss faiss-cpu
 pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
+python -m pip install -U langchain-community
+
 ```
 ---
 

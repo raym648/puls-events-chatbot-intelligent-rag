@@ -3,8 +3,8 @@
 # Framework RAG
 langchain==0.1.16
 
-# Vector database
-faiss-cpu==1.7.4
+# Vector database (compatible Python 3.10+)
+faiss-cpu==1.13.0
 
 # Embeddings open-source
 sentence-transformers==2.2.2

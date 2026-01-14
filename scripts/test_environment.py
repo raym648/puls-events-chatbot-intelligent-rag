@@ -4,22 +4,14 @@
 # Test du bon fonctionnement de l'environnement RAG
 # ===============================
 
+import faiss  # noqa: F401
+from langchain_community.vectorstores import FAISS  # noqa: F401
+from langchain_community.embeddings import HuggingFaceEmbeddings  # noqa: F401
+from mistralai.client import MistralClient  # noqa: F401
+
 print("Python OK")
-
-# Test FAISS
-import faiss
 print("FAISS OK")
-
-# Test LangChain FAISS wrapper
-from langchain.vectorstores import FAISS
 print("LangChain FAISS OK")
-
-# Test embeddings HuggingFace
-from langchain.embeddings import HuggingFaceEmbeddings
 print("HuggingFace Embeddings OK")
-
-# Test client Mistral
-from mistralai.client import MistralClient
 print("Mistral Client OK")
-
 print("Tous les composants sont correctement installés 🎉")
