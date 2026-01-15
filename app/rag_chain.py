@@ -1,106 +1,168 @@
 # puls-events-chatbot-intelligent-rag/app/rag_chain.py
-# ➡ Construction du moteur RAG LangChain + FAISS + Mistral
+# ➜ RAG LangChain + FAISS + Mistral
+# Conforme à l'Étape 3 (FAISS) + Étape 4 (LangChain)
 
 import os
 import pickle
-import faiss
-import numpy as np
 from dotenv import load_dotenv
 
+import faiss
 from mistralai.client import MistralClient
-from langchain.schema import Document  # noqa: F401
 
-# ===============================
-# Chargement des secrets
-# ===============================
+from langchain_community.vectorstores import FAISS as LC_FAISS
+from langchain_core.embeddings import Embeddings
+from langchain.chains import RetrievalQA
+from langchain_core.prompts import PromptTemplate
+from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import AIMessage
+from langchain_core.documents import Document
+
+
+# ============================================================
+# 1. Variables d'environnement
+# ============================================================
+
 load_dotenv()
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 
-client = MistralClient(api_key=MISTRAL_API_KEY)
-
-# ===============================
-# Chargement FAISS + métadonnées
-# ===============================
-index = faiss.read_index("vectorstore/faiss.index")
-
-with open("vectorstore/faiss_store.pkl", "rb") as f:
-    metadata = pickle.load(f)
+mistral_client = MistralClient(api_key=MISTRAL_API_KEY)
 
 
-# ===============================
-# Fonction d’embedding (Mistral)
-# ===============================
-def embed_text(text: str):
-    """
-    Convertit un texte en vecteur numérique via le modèle Mistral
-    """
-    emb = client.embeddings(
-        model="mistral-embed",
-        input=[text]
-    ).data[0].embedding
+# ============================================================
+# 2. Embeddings Mistral → LangChain
+# ============================================================
 
-    vec = np.array([emb]).astype("float32")
-    faiss.normalize_L2(vec)  # normalisation cosinus
-    return vec
+class MistralEmbeddings(Embeddings):
+    """Adaptateur LangChain pour Mistral Embeddings"""
 
+    def embed_documents(self, texts):
+        response = mistral_client.embeddings(
+            model="mistral-embed",
+            input=texts
+        )
+        return [e.embedding for e in response.data]
 
-# ===============================
-# Recherche sémantique FAISS
-# ===============================
-def retrieve_events(query: str, k: int = 5):
-    """
-    Recherche les k événements les plus pertinents pour la question utilisateur
-    """
-    query_vec = embed_text(query)
-    scores, indices = index.search(query_vec, k)
-
-    results = []
-    for i, idx in enumerate(indices[0]):
-        event = metadata[idx]
-        event["score"] = float(scores[0][i])
-        results.append(event)
-
-    return results
+    def embed_query(self, text):
+        return self.embed_documents([text])[0]
 
 
-# ===============================
-# Génération RAG avec Mistral
-# ===============================
-def generate_answer(question: str):
-    """
-    Pipeline RAG :
-    1. Recherche FAISS
-    2. Injection du contexte
-    3. Appel Mistral
-    """
-    retrieved_events = retrieve_events(question)
+# ============================================================
+# 3. LLM Mistral → LangChain
+# ============================================================
 
-    # Construction du contexte à partir des événements
-    context = ""
-    for e in retrieved_events:
-        context += (
-            f"- {e['title']} à {e['city']} le {e['date']}\n"
-            f"  Description: {e['description']}\n"
-            f"  Lien: {e['url']}\n\n"
+class MistralChatLLM(BaseChatModel):
+    """Adaptateur LangChain pour Mistral Chat"""
+
+    @property
+    def _llm_type(self):
+        return "mistral"
+
+    def _generate(self, messages, stop=None):
+        prompt = "\n".join([m.content for m in messages])
+
+        response = mistral_client.chat(
+            model="mistral-small",
+            messages=[{"role": "user", "content": prompt}]
         )
 
-    # Prompt RAG
-    prompt = f"""
-Tu es un assistant spécialisé dans les événements culturels.
-Tu dois répondre uniquement à partir des informations fournies.
+        content = response.choices[0].message.content
+        return AIMessage(content=content)
 
-Événements disponibles :
+
+# ============================================================
+# 4. Chargement FAISS natif + métadonnées
+# ============================================================
+
+VECTORSTORE_DIR = "vectorstore"
+INDEX_PATH = os.path.join(VECTORSTORE_DIR, "faiss.index")
+META_PATH = os.path.join(VECTORSTORE_DIR, "faiss_store.pkl")
+
+# FAISS natif (celui créé à l'Étape 3)
+index = faiss.read_index(INDEX_PATH)
+
+# Métadonnées
+with open(META_PATH, "rb") as f:
+    metadata = pickle.load(f)
+
+# Reconstruction des Documents LangChain
+documents = [
+    Document(
+        page_content=event["description"],
+        metadata={
+            "title": event["title"],
+            "city": event["city"],
+            "date": event["date"],
+            "url": event["url"],
+        }
+    )
+    for event in metadata
+]
+
+
+# ============================================================
+# 5. Injection du FAISS natif dans LangChain
+# ============================================================
+
+embeddings = MistralEmbeddings()
+
+vectorstore = LC_FAISS(
+    embedding_function=embeddings,
+    index=index,
+    docstore={i: doc for i, doc in enumerate(documents)},
+    index_to_docstore_id={i: i for i in range(len(documents))}
+)
+
+retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+
+
+# ============================================================
+# 6. Prompt RAG
+# ============================================================
+
+PROMPT = PromptTemplate(
+    template="""
+Tu es un assistant spécialisé dans les événements culturels.
+
+Tu dois répondre uniquement à partir des événements suivants :
+
 {context}
 
-Question utilisateur :
+Question :
 {question}
 
-Réponds de façon claire, utile et naturelle.
-"""
+Réponds de manière claire, utile et naturelle.
+""",
+    input_variables=["context", "question"],
+)
 
-    response = client.chat(
-        model="mistral-small",
-        messages=[{"role": "user", "content": prompt}]
-    )
 
-    return response.choices[0].message.content
+# ============================================================
+# 7. Chaîne RAG
+# ============================================================
+
+llm = MistralChatLLM()
+
+qa_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    retriever=retriever,
+    chain_type="stuff",
+    chain_type_kwargs={"prompt": PROMPT},
+    return_source_documents=False,
+)
+
+
+# ============================================================
+# 8. Point d’entrée utilisé par run_chatbot.py
+# ============================================================
+
+def generate_answer(question: str) -> str:
+    result = qa_chain.invoke({"query": question})
+    return result["result"]
+
+
+# ============================================================
+# 9. Factory pour l’API (Étape 5)
+# ============================================================
+
+def build_rag_chain():
+    return qa_chain
