@@ -66,13 +66,13 @@ tests/       Tests unitaires
 
 # 📊 Résumé exécutif Étape 1
 ```bash
-| Élément | Statut |
-|-------|------|
-| Environnement isolé | ✅ |
-| Librairies compatibles | ✅ |
-| FAISS CPU | ✅ |
-| Mistral sécurisé | ✅ |
-| Projet clonable | ✅ |
-| Test automatisé | ✅ |
+| Élément                | Statut |
+|------------------------|--------|
+| Environnement isolé    |   ✅   |
+| Librairies compatibles |   ✅   |
+| FAISS CPU              |   ✅   |
+| Mistral sécurisé       |   ✅   |
+| Projet clonable        |   ✅   |
+| Test automatisé        |   ✅   |
 ```
 ---
