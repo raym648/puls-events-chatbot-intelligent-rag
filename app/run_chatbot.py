@@ -1,7 +1,9 @@
 # puls-events-chatbot-intelligent-rag/app/run_chatbot.py
 # ➡ Interface simple pour tester le chatbot RAG
 
-from rag_chain import generate_answer
+from app.rag_service import RAGService
+
+service = RAGService()
 
 print("\nAssistant Puls-Events (RAG)")
 print("Tape 'exit' pour quitter.\n")
@@ -12,5 +14,5 @@ while True:
     if question.lower() == "exit":
         break
 
-    answer = generate_answer(question)
+    answer = service.ask(question)
     print("\nAssistant >", answer, "\n")
