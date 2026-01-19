@@ -31,14 +31,20 @@ class RAGService:
     # --------------------------------------------------
     # Requête utilisateur
     # --------------------------------------------------
-    def ask(self, question: str) -> str:
+    def ask(self, question: str) -> dict:
         """
-        Pose une question au moteur RAG.
+        Returns answer and retrieved contexts for evaluation.
         """
-        self.load()
+        retrieved_docs = self.retriever.get_relevant_documents(question)
 
-        result = self.chain.invoke({"query": question})
-        return result["result"]
+        contexts = [doc.page_content for doc in retrieved_docs]
+
+        answer = self.llm.generate_answer(question, contexts)
+
+        return {
+            "answer": answer,
+            "contexts": contexts
+        }
 
     # --------------------------------------------------
     # Rechargement du FAISS (après rebuild)

@@ -28,7 +28,9 @@ dataset = Dataset.from_dict(data)
 
 
 def generate_answer(example):
-    example["answer"] = rag.ask(example["question"])
+    output = rag.ask(example["question"])
+    example["answer"] = output["answer"]
+    example["contexts"] = output["contexts"]
     return example
 
 
