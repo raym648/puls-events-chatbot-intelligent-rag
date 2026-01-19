@@ -111,11 +111,12 @@ jobs:
     # 🚀 Push RAG API
     - name: Deploy RAG API Space
       run: |
-        huggingface-cli upload hf_api \
-          --repo-id ${{ secrets.HF_USERNAME }}/rag-api \
+        huggingface-cli upload \
+          ${{ secrets.HF_USERNAME }}/rag-api \
+          hf_api \
           --repo-type space \
           --commit-message "Deploy RAG API 🚀"
-
+    
     # 📦 Build HF Dashboard Space
     - name: Prepare HF Dashboard Space
       run: |
@@ -125,7 +126,8 @@ jobs:
     # 🚀 Push Dashboard
     - name: Deploy RAG Dashboard Space
       run: |
-        huggingface-cli upload hf_dashboard \
-          --repo-id ${{ secrets.HF_USERNAME }}/rag-dashboard \
+        huggingface-cli upload \
+          ${{ secrets.HF_USERNAME }}/rag-dashboard \
+          hf_dashboard \
           --repo-type space \
           --commit-message "Deploy RAG Dashboard 📊"
