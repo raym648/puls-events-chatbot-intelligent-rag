@@ -7,45 +7,78 @@
 * 🗓️ **Date de mise à jour :** *[14-01-2026]*
 
 
-## Objectif
-Ce projet est un POC démontrant la faisabilité d’un **assistant IA** capable de recommander des événements culturels à partir de données OpenAgenda en utilisant une **architecture RAG**.
+## 🎯 Objectif
+Ce projet est un **POC (Proof of Concept)** démontrant la faisabilité d’un **assistant IA** capable de recommander des événements culturels à partir des données **OpenAgenda**, en utilisant une **architecture RAG (Retrieval-Augmented Generation)**.
+
+L’objectif métier est de permettre aux équipes **produit** et **marketing** de Puls-Events de tester un chatbot capable de :
+- Comprendre des questions utilisateurs,
+- Rechercher les événements pertinents,
+- Générer des réponses naturelles, fiables et contextualisées.
 
 ---
 
-## Stack technique
-- LangChain (orchestration RAG)
-- FAISS (base vectorielle)
-- Mistral AI (LLM)
-- HuggingFace (embeddings)
-- FastAPI (API REST)
+## 🧠 Architecture globale (RAG)
+```bash
+Utilisateur
+│
+▼
+FastAPI ──▶ LangChain ──▶ FAISS ──▶ OpenAgenda Events
+│ ▲
+▼ │
+Mistral LLM ◀── Contextes vectorisés (embeddings)
+```
+
+**Le système repose sur :**
+- Une **base vectorielle FAISS** contenant les descriptions d’événements,
+- Un **LLM Mistral** pour la génération de réponses,
+- **LangChain** pour orchestrer la recherche + génération,
+- Une **API FastAPI** exposant le chatbot.
 
 ---
 
-## Installation
+## 🧩 Stack technique
+```bash
+| Composant               | Rôle                             |
+|-------------------------|----------------------------------|
+| **LangChain**           | Orchestration RAG                |
+| **FAISS**               | Recherche sémantique vectorielle |
+| **Mistral AI**          | Modèle de langage (LLM)          |
+| **HuggingFace**         | Embeddings                       |
+| **FastAPI**             | API REST                         |
+| **RAGAS**               | Évaluation qualité RAG           |
+| **GitHub Actions**      | CI/CD                            |
+| **Docker**              | Déploiement                      |
+| **Hugging Face Spaces** | Hébergement                      |
+```
+---
+
+## ⚙️ Installation
+
 ```bash
 git clone <repo>
 cd puls-events-chatbot-intelligent-rag
+
 python -m venv env
 source env/bin/activate
 
 pip uninstall -y faiss faiss-cpu
 pip install -r requirements.txt
-python3 -m pip install -r requirements.txt
 python -m pip install -U langchain-community
-
 ```
----
 
+## 🔐 Variables d’environnement
 **Créer le fichier .env :**
 ```bash
 MISTRAL_API_KEY=your_key_here
+ADMIN_TOKEN=secure_admin_token
+⚠️ Ce fichier est ignoré par Git pour des raisons de sécurité.
 ```
-**Vérification**
+
+## 🧪 Vérification de l’environnement
 ```bash
 python scripts/test_environment.py
 ```
-
-**Vous devez voir :**
+**Sortie attendue :**
 ```bash
 Python OK
 FAISS OK
@@ -54,17 +87,25 @@ HuggingFace Embeddings OK
 Mistral Client OK
 Tous les composants sont correctement installés
 ```
-**Structure**
+
+## 📂 Structure du projet
 ```bash
-app/         API FastAPI
-data/        Données OpenAgenda
-scripts/     Scripts de traitement
-vectorstore/ Index FAISS
-tests/       Tests unitaires
+puls-events-chatbot-intelligent-rag/
+│
+├── app/          API FastAPI + RAG
+├── data/         Données OpenAgenda
+├── scripts/      Préprocessing & indexation
+├── vectorstore/  Index FAISS
+├── tests/        Tests unitaires & RAGAS
+├── .env
+├── Dockerfile
+├── requirements.txt
+└── README.md
 ```
+
 ---
 
-# 📊 Résumé exécutif Étape 1
+## 📊 Étape 1 : Environnement
 ```bash
 | Élément                | Statut |
 |------------------------|--------|
@@ -75,4 +116,114 @@ tests/       Tests unitaires
 | Projet clonable        |   ✅   |
 | Test automatisé        |   ✅   |
 ```
+
 ---
+
+## 📊 Étape 2 – Données OpenAgenda
+**Pipeline :**
+- Récupération via API OpenAgenda
+- Filtrage géographique & temporel
+- Nettoyage des champs manquants
+- Création de textes exploitables
+- Génération d’embeddings
+
+**Fichiers produits :**
+```bash
+data/raw_events.json
+data/cleaned_events.csv
+data/cleaned_events_with_embeddings.pkl
+```
+
+---
+
+## 🧠 Étape 3 – Base vectorielle FAISS
+**Chaque événement est stocké avec :**
+- Son embedding
+- Son titre
+- Sa ville
+- Sa date
+- Son URL
+
+**Fichiers :**
+```bash
+vectorstore/faiss.index
+vectorstore/faiss_store.pkl
+```
+
+**Tests :**
+```bash
+python scripts/test_faiss_search.py
+```
+
+---
+
+## 🤖 Étape 4 – Système RAG
+**Le moteur RAG :**
+- Récupère les événements les plus proches sémantiquement
+- Injecte leur contenu dans le prompt
+- Génère une réponse Mistral contextualisée
+
+**Test :**
+```bash
+pytest tests/test_rag.py
+```
+
+---
+
+## 🌐 Étape 5 – API FastAPI
+**Démarrage :**
+```bash
+uvicorn app.main:app --reload
+```
+
+**Swagger :**
+```bash
+http://localhost:8000/docs
+```
+
+**Endpoints :**
+```bash
+Route	Rôle
+POST /ask	Poser une question
+POST /rebuild	Recalculer l’index FAISS
+```
+
+**Test :**
+```bash
+python scripts/api_test.py
+```
+
+---
+
+## 📈 Évaluation automatique (RAGAS)
+```bash
+python tests/evaluate_rag.py
+```
+
+**Mesures :**
+- Context Precision
+- Answer Faithfulness
+- Answer Relevance
+
+---
+
+### 🚀 Déploiement
+**Le projet est déployé automatiquement via GitHub Actions vers :**
+- Hugging Face Space API
+- Hugging Face Space Dashboard
+
+**À chaque git push main, le pipeline :**
+- Exécute tous les tests
+- Évalue la qualité RAG
+- Construit les images Docker
+- Déploie en production
+
+### 🏁 Résultat
+**Puls-Events dispose maintenant :**
+- D’un chatbot IA opérationnel
+- D’une API REST sécurisée
+- D’un dashboard
+- D’un pipeline MLOps complet
+- D’une base vectorielle sémantique
+
+***Ce POC démontre la faisabilité industrielle d’un assistant de recommandation culturelle basé sur RAG.***
