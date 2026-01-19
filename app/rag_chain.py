@@ -16,6 +16,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage
 from langchain_core.documents import Document
+from langchain.docstore import InMemoryDocstore
 
 
 # ============================================================
@@ -108,7 +109,9 @@ embeddings = MistralEmbeddings()
 vectorstore = LC_FAISS(
     embedding_function=embeddings,
     index=index,
-    docstore={i: doc for i, doc in enumerate(documents)},
+    docstore=InMemoryDocstore(
+        {i: doc for i, doc in enumerate(documents)}
+    ),
     index_to_docstore_id={i: i for i in range(len(documents))}
 )
 
