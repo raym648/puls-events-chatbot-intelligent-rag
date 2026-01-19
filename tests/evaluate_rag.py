@@ -6,7 +6,8 @@
 """
 
 from ragas import evaluate
-from ragas.metrics import faithfulness, answer_relevancy
+# from ragas.metrics import faithfulness, answer_relevancy
+from ragas.metrics import answer_relevancy
 from datasets import Dataset
 
 from app.rag_service import RAGService
@@ -38,8 +39,9 @@ dataset = dataset.map(generate_answer)
 
 results = evaluate(
     dataset,
-    metrics=[faithfulness, answer_relevancy],
-    llm=None,   # ⬅️ empêche Ragas d’utiliser ChatOpenAI
+    # metrics=[faithfulness, answer_relevancy],
+    metrics=[answer_relevancy],  # ✅ métrique sans LLM externe
+    # llm=None,   # ⬅️ empêche Ragas d’utiliser ChatOpenAI
 )
 
 print(results)
