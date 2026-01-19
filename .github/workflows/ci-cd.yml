@@ -63,13 +63,13 @@ jobs:
     # 8️⃣ Lancement API FastAPI en arrière-plan
     - name: Start API
       run: |
-        uvicorn app.main:app --host 127.0.0.1 --port 8000 &
-        sleep 10
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+        sleep 5
 
     # 9️⃣ Test fonctionnel API
-    - name: Test API endpoints
-      run: |
-        python scripts/api_test.py
+    - name: API test
+      run: python tests/test_api.py
+
 
     # 🔟 Évaluation qualité RAG (Ragas)
     - name: Run RAG evaluation
