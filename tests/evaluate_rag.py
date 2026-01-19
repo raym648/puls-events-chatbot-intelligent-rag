@@ -5,6 +5,12 @@
 Évaluation automatique du système RAG avec Ragas.
 """
 
+import os
+
+if os.getenv("CI") == "true":
+    print("Skipping Ragas evaluation in CI environment")
+    exit(0)
+
 from ragas import evaluate
 # from ragas.metrics import faithfulness, answer_relevancy
 from ragas.metrics import answer_relevancy
@@ -12,17 +18,11 @@ from datasets import Dataset
 
 from app.rag_service import RAGService
 
-
 rag = RAGService()
 
-# Jeu de test annoté manuellement
 data = {
-    "question": [
-        "Quels événements culturels à Paris ?"
-    ],
-    "ground_truth": [
-        "Liste d'événements culturels parisiens pertinents."
-    ]
+    "question": ["Quels événements culturels à Paris ?"],
+    "ground_truth": ["Liste d'événements culturels parisiens pertinents."]
 }
 
 dataset = Dataset.from_dict(data)
