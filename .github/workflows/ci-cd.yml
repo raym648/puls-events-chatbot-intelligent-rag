@@ -68,6 +68,8 @@ jobs:
 
     # 9️⃣ Test fonctionnel API
     - name: API test
+      env:
+        PYTHONPATH: .
       run: python tests/test_api.py
 
 
