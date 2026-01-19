@@ -38,7 +38,8 @@ dataset = dataset.map(generate_answer)
 
 results = evaluate(
     dataset,
-    metrics=[faithfulness, answer_relevancy]
+    metrics=[faithfulness, answer_relevancy],
+    llm=None,   # ⬅️ empêche Ragas d’utiliser ChatOpenAI
 )
 
 print(results)
