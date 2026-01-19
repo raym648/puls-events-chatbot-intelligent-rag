@@ -1,10 +1,11 @@
+
 # puls-events-chatbot-intelligent-rag/app/rag_service.py
 # 👉 Couche Service du système RAG (Étape 5)
 
 """
 Service central du système RAG.
 Encapsule FAISS + LangChain + Mistral.
-Utilisé par l’API FastAPI.
+Utilisé par l’API FastAPI et par l’évaluation Ragas.
 """
 
 from app.rag_chain import build_rag_chain
@@ -17,6 +18,7 @@ class RAGService:
 
     def __init__(self):
         self.chain = None
+        self.retriever = None
 
     # --------------------------------------------------
     # Chargement paresseux
@@ -27,23 +29,28 @@ class RAGService:
         """
         if self.chain is None:
             self.chain = build_rag_chain()
+            self.retriever = self.chain.retriever
 
     # --------------------------------------------------
     # Requête utilisateur
     # --------------------------------------------------
     def ask(self, question: str) -> dict:
         """
-        Returns answer and retrieved contexts for evaluation.
+        Retourne la réponse et les contextes récupérés,
+        nécessaires pour l’évaluation Ragas.
         """
-        retrieved_docs = self.retriever.get_relevant_documents(question)
+        self.load()
 
-        contexts = [doc.page_content for doc in retrieved_docs]
+        # 1. Récupération des documents
+        docs = self.retriever.get_relevant_documents(question)
+        contexts = [doc.page_content for doc in docs]
 
-        answer = self.llm.generate_answer(question, contexts)
+        # 2. Génération de la réponse via la chaîne RAG
+        result = self.chain.invoke({"query": question})
 
         return {
-            "answer": answer,
-            "contexts": contexts
+            "answer": result["result"],
+            "contexts": contexts,
         }
 
     # --------------------------------------------------
@@ -55,3 +62,4 @@ class RAGService:
         À appeler après avoir exécuté build_faiss_index.py.
         """
         self.chain = None
+        self.retriever = None
