@@ -72,9 +72,10 @@ jobs:
         python scripts/api_test.py
 
     # 🔟 Évaluation qualité RAG (Ragas)
-    - name: Evaluate RAG quality
-      run: |
-        python tests/evaluate_rag.py
+    - name: Run RAG evaluation
+      env:
+        PYTHONPATH: .
+      run: python tests/evaluate_rag.py
 
     # 11️⃣ Vérification que la base FAISS est toujours cohérente
     - name: Check FAISS files
