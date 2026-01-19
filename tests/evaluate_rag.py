@@ -5,11 +5,16 @@
 Évaluation automatique du système RAG avec Ragas.
 """
 
+import sys
+import os
+
 from ragas import evaluate
 from ragas.metrics import faithfulness, answer_relevancy
 from datasets import Dataset
 
 from app.rag_service import RAGService
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 rag = RAGService()
 
