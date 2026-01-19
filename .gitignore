@@ -5,6 +5,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyc
+*.pyd
 
 # ======================
 # Packages & builds
@@ -55,9 +56,13 @@ docker-volume/
 # GITHUB ACTIONS
 # ======================
 .github/workflows/__pycache__/
+.git
+.github
 
 # ======================
 # OS / SYSTEM FILES
 # ======================
 .DS_Store
 Thumbs.db
+
+# tests/

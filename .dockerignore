@@ -1,0 +1,10 @@
+# puls-events-chatbot-intelligent-rag/.dockerignore
+
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git
+.github
+tests/

@@ -1,0 +1,5 @@
+# puls-events-chatbot-intelligent-rag/dashboard/requirements.txt
+
+streamlit
+requests
+pandas
