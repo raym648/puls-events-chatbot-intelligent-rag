@@ -16,7 +16,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage
 from langchain_core.documents import Document
-from langchain.docstore import InMemoryDocstore
+from langchain_core.outputs import ChatResult, ChatGeneration
+from langchain_community.docstore.in_memory import InMemoryDocstore
 
 
 # ============================================================
@@ -50,7 +51,6 @@ class MistralEmbeddings(Embeddings):
 # ============================================================
 # 3. LLM Mistral → LangChain
 # ============================================================
-
 class MistralChatLLM(BaseChatModel):
     """Adaptateur LangChain pour Mistral Chat"""
 
@@ -58,7 +58,7 @@ class MistralChatLLM(BaseChatModel):
     def _llm_type(self):
         return "mistral"
 
-    def _generate(self, messages, stop=None):
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
         prompt = "\n".join([m.content for m in messages])
 
         response = mistral_client.chat(
@@ -67,7 +67,14 @@ class MistralChatLLM(BaseChatModel):
         )
 
         content = response.choices[0].message.content
-        return AIMessage(content=content)
+
+        return ChatResult(
+            generations=[
+                ChatGeneration(
+                    message=AIMessage(content=content)
+                )
+            ]
+        )
 
 
 # ============================================================
