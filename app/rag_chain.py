@@ -141,6 +141,8 @@ Question :
 {question}
 
 Réponds de manière claire, utile et naturelle.
+
+pour chaque évènement affiche les dates
 """,
     input_variables=["context", "question"],
 )
