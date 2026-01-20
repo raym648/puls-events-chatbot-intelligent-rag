@@ -162,3 +162,25 @@ def build_rag_chain() -> Tuple[RetrievalQA, List[Document]]:
     )
 
     return qa_chain, documents
+
+
+# ============================================================
+# 6. API publique testable (utilisée par pytest & app)
+# ============================================================
+
+def generate_answer(question: str) -> str:
+    """
+    Génère une réponse textuelle à partir de la chaîne RAG.
+    """
+    if not question or not question.strip():
+        return ""
+
+    qa_chain, _ = build_rag_chain()
+
+    result = qa_chain.invoke({"query": question})
+
+    # RetrievalQA avec return_source_documents=True
+    if isinstance(result, dict):
+        return result.get("result", "")
+
+    return str(result)
