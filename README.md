@@ -255,4 +255,9 @@ python tests/evaluate_rag.py
 - “Y a-t-il des visites guidées culturelles prévues fin mars à Paris ?”  
 
 ---
+### Lien url **Dashboard** :  
+```
+https://remdev-ai-rag-dashboard.hf.space
+```
+---
 ***Ce POC démontre la faisabilité industrielle d’un assistant de recommandation culturelle basé sur RAG.***
