@@ -1,28 +1,27 @@
 # puls-events-chatbot-intelligent-rag/tests/test_rag.py
-# ➡ Test unitaire du module RAG sans dépendances LangChain réelles
+# ➡ Test unitaire CI-safe de build_rag_chain()
 
 import sys
 import types
-
+from unittest.mock import MagicMock
+import pickle
 
 # ============================================================
-# 1. Mock minimal de langchain.chains.RetrievalQA
-#    (pour éviter l'erreur d'import en CI)
+# 1. MOCKS AVANT IMPORT (OBLIGATOIRE)
 # ============================================================
 
+# --- Mock langchain.chains.RetrievalQA -----------------------
 fake_langchain = types.ModuleType("langchain")
 fake_chains = types.ModuleType("langchain.chains")
 
 
 class FakeRetrievalQA:
-    """Stub minimal pour satisfaire l'import"""
-
     @classmethod
     def from_chain_type(cls, *args, **kwargs):
         return cls()
 
     def invoke(self, *args, **kwargs):
-        return {"result": "Réponse simulée à propos de concerts à Paris."}
+        return {"result": "Concerts disponibles à Paris ce mois-ci."}
 
 
 fake_chains.RetrievalQA = FakeRetrievalQA
@@ -32,22 +31,72 @@ sys.modules["langchain"] = fake_langchain
 sys.modules["langchain.chains"] = fake_chains
 
 
+# --- Mock faiss ----------------------------------------------
+fake_faiss = types.ModuleType("faiss")
+fake_faiss.read_index = MagicMock(return_value="FAKE_INDEX")
+sys.modules["faiss"] = fake_faiss
+
+
+# --- Mock pickle.load ----------------------------------------
+pickle.load = MagicMock(
+    return_value=[
+        {
+            "title": "Concert Jazz",
+            "city": "Paris",
+            "date": "2025-03-10",
+            "description": "Un concert de jazz exceptionnel."
+        }
+    ]
+)
+
+
+# --- Mock MistralClient --------------------------------------
+fake_mistral = types.ModuleType("mistralai.client")
+
+
+class FakeMistralClient:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def chat(self, *args, **kwargs):
+        class Choice:
+            message = type("msg", (), {"content": "Réponse Mistral simulée"})
+        return type("resp", (), {"choices": [Choice()]})
+
+    def embeddings(self, *args, **kwargs):
+        return type(
+            "resp",
+            (),
+            {"data": [type("d", (), {"embedding": [0.1, 0.2, 0.3]})]}
+        )
+
+
+fake_mistral.MistralClient = FakeMistralClient
+sys.modules["mistralai.client"] = fake_mistral
+
+
 # ============================================================
-# 2. Import du module à tester (maintenant sécurisé)
+# 2. IMPORT DU MODULE À TESTER (APRÈS MOCKS)
 # ============================================================
 
-from app.rag_chain import generate_answer  # noqa: E402
+from app.rag_chain import build_rag_chain  # noqa: E402
 
 
 # ============================================================
-# 3. Test
+# 3. TEST
 # ============================================================
 
-def test_rag_response_not_empty():
-    question = "Y a-t-il des concerts à Paris ?"
+def test_build_rag_chain_returns_answer():
+    qa_chain, documents = build_rag_chain()
 
-    answer = generate_answer(question)
+    # Vérifications structurelles
+    assert qa_chain is not None
+    assert documents is not None
+    assert len(documents) == 1
 
-    assert answer is not None
-    assert isinstance(answer, str)
-    assert len(answer) > 20
+    # Vérification fonctionnelle
+    result = qa_chain.invoke({"query": "Y a-t-il des concerts à Paris ?"})
+
+    assert isinstance(result, dict)
+    assert "result" in result
+    assert len(result["result"]) > 20
