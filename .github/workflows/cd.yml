@@ -31,15 +31,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install huggingface_hub
 
-      
-      # ===============================
-      # bloc temporaire à exécuter une seule fois
-      # ===============================
-      - name: Debug Hugging Face CLI
-        run: |
-            which huggingface-cli
-            huggingface-cli --help
-
       # ============================
       # 🚀 DEPLOY API SPACE
       # ============================
