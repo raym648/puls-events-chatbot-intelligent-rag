@@ -226,4 +226,33 @@ python tests/evaluate_rag.py
 - D’un pipeline MLOps complet
 - D’une base vectorielle sémantique
 
+---
+
+## 🧠🎭 15 exemples de requêtes sur les événements culturels
+**🎷 Musique / Jazz** 
+- “Quels concerts de jazz sont prévus à Paris en mars 2025 ?”  
+- “Je cherche un concert de jazz manouche à Paris fin mars.”  
+- “Y a-t-il un concert de jazz le 15 mars à Paris ?”  
+- “Quels événements musicaux ont lieu à la Bellevilloise ce mois-ci ?”  
+
+**🎭 Théâtre & danse** 
+- “Quelles pièces de théâtre classiques sont jouées à Paris en mars ?”  
+- “Je voudrais voir un spectacle de danse contemporaine à Paris.”  
+- “Y a-t-il des spectacles d’improvisation théâtrale ce mois-ci ?”  
+
+**🖼️ Expositions** 
+- “Quelles expositions sont visibles à Paris au printemps 2025 ?”  
+- “Existe-t-il une exposition de photographie à Paris en mars ?”  
+- “Je cherche une exposition d’art moderne à Paris.”  
+
+**🎬 Cinéma & conférences** 
+- “Y a-t-il des événements autour du cinéma en mars 2025 à Paris ?”  
+- “Des conférences qui parlent d’intelligence artificielle et de culture ?”  
+
+**👨‍👩‍👧 Famille & médiation culturelle** 
+- “Quels événements culturels sont adaptés aux enfants à Paris ?”  
+- “Je cherche une activité culturelle pour un dimanche en mars.”  
+- “Y a-t-il des visites guidées culturelles prévues fin mars à Paris ?”  
+
+---
 ***Ce POC démontre la faisabilité industrielle d’un assistant de recommandation culturelle basé sur RAG.***

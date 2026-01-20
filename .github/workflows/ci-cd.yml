@@ -85,49 +85,64 @@ jobs:
         test -f vectorstore/faiss.index
         test -f vectorstore/faiss_store.pkl
 
-    # ============================
-    # 🚀 DEPLOY TO HUGGING FACE
-    # ============================
+  deploy:
+    name: Deploy API and Dashboard to Hugging Face Spaces
+    runs-on: ubuntu-latest
+    needs: rag-ci
+    if: github.ref == 'refs/heads/main' && needs.rag-ci.result == 'success'
 
-    - name: Install HuggingFace CLI
-      run: |
-        pip install huggingface_hub
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    - name: Login to Hugging Face
-      run: |
-        huggingface-cli login --token $HF_TOKEN
-      env:
-        HF_TOKEN: ${{ secrets.HF_TOKEN_03 }}
+      - name: Configure git
+        run: |
+          git config --global user.email "ci-bot@puls-events.example"
+          git config --global user.name "puls-events-ci-bot"
 
-    # 📦 Build HF API Space
-    - name: Prepare HF API Space
-      run: |
-        mkdir -p hf_api
-        cp -r app vectorstore data requirements.txt Dockerfile hf_api/
+      # ============================
+      # 🚀 DEPLOY TO HUGGING FACE
+      # ============================
 
-        echo "EXPOSE 7860" >> hf_api/Dockerfile
-        sed -i 's/8000/7860/g' hf_api/Dockerfile
+      - name: Install HuggingFace CLI
+        run: |
+          pip install huggingface_hub
 
-    # 🚀 Push RAG API
-    - name: Deploy RAG API Space
-      run: |
-        huggingface-cli upload \
-          ${{ secrets.HF_USERNAME }}/rag-api \
-          hf_api \
-          --repo-type space \
-          --commit-message "Deploy RAG API 🚀"
-    
-    # 📦 Build HF Dashboard Space
-    - name: Prepare HF Dashboard Space
-      run: |
-        mkdir -p hf_dashboard
-        cp -r dashboard/* hf_dashboard/
+      - name: Login to Hugging Face
+        run: |
+          huggingface-cli login --token $HF_TOKEN
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN_03 }}
 
-    # 🚀 Push Dashboard
-    - name: Deploy RAG Dashboard Space
-      run: |
-        huggingface-cli upload \
-          ${{ secrets.HF_USERNAME }}/rag-dashboard \
-          hf_dashboard \
-          --repo-type space \
-          --commit-message "Deploy RAG Dashboard 📊"
+      # 📦 Build HF API Space
+      - name: Prepare HF API Space
+        run: |
+          mkdir -p hf_api
+          cp -r app vectorstore data requirements.txt Dockerfile hf_api/
+
+          echo "EXPOSE 7860" >> hf_api/Dockerfile
+          sed -i 's/8000/7860/g' hf_api/Dockerfile
+
+      # 🚀 Push RAG API
+      - name: Deploy RAG API Space
+        run: |
+          huggingface-cli upload \
+            ${{ secrets.HF_USERNAME }}/rag-api \
+            hf_api \
+            --repo-type space \
+            --commit-message "Deploy RAG API 🚀"
+      
+      # 📦 Build HF Dashboard Space
+      - name: Prepare HF Dashboard Space
+        run: |
+          mkdir -p hf_dashboard
+          cp -r dashboard/* hf_dashboard/
+
+      # 🚀 Push Dashboard
+      - name: Deploy RAG Dashboard Space
+        run: |
+          huggingface-cli upload \
+            ${{ secrets.HF_USERNAME }}/rag-dashboard \
+            hf_dashboard \
+            --repo-type space \
+            --commit-message "Deploy RAG Dashboard 📊"
