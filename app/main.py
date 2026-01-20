@@ -3,6 +3,7 @@
 
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel, Field
+from typing import List
 
 from app.rag_service import RAGService
 from app.security import verify_admin_token
@@ -11,16 +12,17 @@ app = FastAPI(
     title="Cultural Events RAG API",
     description=(
         "API REST pour interroger un système RAG "
-        "LangChain + FAISS + Mistral"
+        "basé sur FAISS + Mistral"
     ),
     version="1.0.0",
 )
 
-rag_service = RAGService()
+# Initialisation différée du service RAG
+rag_service: RAGService | None = None
 
 
 # ============================================================
-# Modèles
+# Modèles API
 # ============================================================
 
 class QuestionRequest(BaseModel):
@@ -29,6 +31,20 @@ class QuestionRequest(BaseModel):
 
 class AnswerResponse(BaseModel):
     answer: str
+    contexts: List[str]
+
+
+# ============================================================
+# Lifecycle
+# ============================================================
+
+@app.on_event("startup")
+def load_rag():
+    """
+    Chargement initial du moteur RAG au démarrage de l’API.
+    """
+    global rag_service
+    rag_service = RAGService()
 
 
 # ============================================================
@@ -40,9 +56,21 @@ def ask_question(payload: QuestionRequest):
     """
     Interroge le moteur RAG.
     """
+    if rag_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail="RAG service not initialized"
+        )
+
     try:
-        answer = rag_service.ask(payload.question)
-        return {"answer": answer}
+        response = rag_service.ask(payload.question)
+
+        # Sécurité contractuelle
+        if not isinstance(response, dict):
+            raise ValueError("Invalid RAG response format")
+
+        return response
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -50,10 +78,16 @@ def ask_question(payload: QuestionRequest):
 @app.post("/reload", dependencies=[Depends(verify_admin_token)])
 def reload_rag():
     """
-    Recharge FAISS + LangChain après reconstruction offline.
-    À appeler APRÈS avoir exécuté :
+    Recharge FAISS + métadonnées après reconstruction offline.
+    À appeler APRÈS :
         python scripts/build_faiss_index.py
     """
+    if rag_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail="RAG service not initialized"
+        )
+
     try:
         rag_service.reload()
         return {"status": "RAG reloaded successfully"}

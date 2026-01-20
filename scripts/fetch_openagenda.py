@@ -1,70 +1,64 @@
 # puls-events-chatbot-intelligent-rag/scripts/fetch_openagenda.py
-# ➡ Récupération des événements via OpenAgenda API
+# ➡ Récupération paginée des événements via OpenAgenda API
 
 import requests
 import json
 from datetime import datetime, timedelta, timezone
 
-# ===============================
-# Paramètres de filtrage métier
-# ===============================
+CITY = "Paris"
+DAYS_PAST = 365
+DAYS_FUTURE = 365
 
-CITY = "Paris"                     # Ville ciblée
-DAYS_PAST = 365                    # 1 an d'historique
-DAYS_FUTURE = 365                  # 1 an à venir
-LIMIT = 100                       # Nombre max d'événements récupérés
-
-# ===============================
-# Calcul des dates (UTC timezone-aware)
-# ===============================
+LIMIT = 100            # ⚠️ max autorisé par OpenAgenda
+MAX_EVENTS = 350       # objectif métier
 
 today = datetime.now(timezone.utc)
-
 date_min = (today - timedelta(days=DAYS_PAST)).strftime("%Y-%m-%d")
 date_max = (today + timedelta(days=DAYS_FUTURE)).strftime("%Y-%m-%d")
 
-# ===============================
-# Endpoint OpenAgenda (Opendatasoft)
-# ===============================
+print(f"Récupération des événements à {CITY}")
+print(f"Période : {date_min} → {date_max}")
 
 BASE_URL = (
     "https://public.opendatasoft.com/api/explore/v2.1/catalog/"
     "datasets/evenements-publics-openagenda/records"
 )
 
-params = {
-    "where": (
-        f"location_city='{CITY}' AND "
-        f"firstdate_begin <= '{date_max}' AND "
-        f"lastdate_end >= '{date_min}'"
-    ),
-    "limit": LIMIT,
-}
+all_events = []
+offset = 0
 
+while len(all_events) < MAX_EVENTS:
+    params = {
+        "where": (
+            f"location_city='{CITY}' AND "
+            f"firstdate_begin <= '{date_max}' AND "
+            f"lastdate_end >= '{date_min}'"
+        ),
+        "limit": LIMIT,
+        "offset": offset,
+        "order_by": "firstdate_begin ASC"
+    }
 
-print("Requête OpenAgenda en cours...")
-response = requests.get(BASE_URL, params=params)
+    print(f"Requête OpenAgenda (offset={offset})...")
+    response = requests.get(BASE_URL, params=params, timeout=30)
 
-# ===============================
-# Vérification de la réponse
-# ===============================
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Erreur OpenAgenda ({response.status_code}) : {response.text}"
+        )
 
-if response.status_code != 200:
-    raise Exception(
-        f"Erreur OpenAgenda: {response.status_code} – "
-        f"{response.text}"
-    )
+    data = response.json()
+    results = data.get("results", [])
 
-data = response.json()
+    if not results:
+        break
 
-# ===============================
-# Sauvegarde brute des événements
-# ===============================
+    all_events.extend(results)
+    offset += LIMIT
+
+print(f"{len(all_events)} événements récupérés")
 
 with open("data/raw_events.json", "w", encoding="utf-8") as f:
-    json.dump(data, f, ensure_ascii=False, indent=2)
+    json.dump({"results": all_events}, f, ensure_ascii=False, indent=2)
 
-print(
-    f"{len(data['results'])} événements récupérés et "
-    "sauvegardés dans data/raw_events.json"
-)
+print("✅ Données sauvegardées dans data/raw_events.json")

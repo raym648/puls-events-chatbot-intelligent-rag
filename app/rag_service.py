@@ -1,12 +1,16 @@
 # puls-events-chatbot-intelligent-rag/app/rag_service.py
 # 👉 Couche Service du système RAG (Étape 5)
 
+# puls-events-chatbot-intelligent-rag/app/rag_service.py
+# 👉 Couche Service du système RAG
+
 """
 Service central du système RAG.
-Encapsule FAISS + LangChain + Mistral.
-Utilisé par l’API FastAPI.
+Façade métier entre l’API FastAPI et la chaîne RAG.
+Compatible évaluation Ragas (answer + contexts).
 """
 
+from typing import List, Dict, Any
 from app.rag_chain import build_rag_chain
 
 
@@ -16,7 +20,7 @@ class RAGService:
     """
 
     def __init__(self):
-        self.chain = None
+        self.qa_chain = None
 
     # --------------------------------------------------
     # Chargement paresseux
@@ -25,27 +29,42 @@ class RAGService:
         """
         Initialise la chaîne RAG si nécessaire.
         """
-        if self.chain is None:
-            self.chain = build_rag_chain()
+        if self.qa_chain is None:
+            self.qa_chain, _ = build_rag_chain()
 
     # --------------------------------------------------
     # Requête utilisateur
     # --------------------------------------------------
-    def ask(self, question: str) -> str:
+    def ask(self, question: str) -> Dict[str, Any]:
         """
-        Pose une question au moteur RAG.
+        Exécute une requête RAG et retourne :
+        - la réponse générée
+        - les contextes utilisés (pour audit / Ragas)
         """
         self.load()
 
-        result = self.chain.invoke({"query": question})
-        return result["result"]
+        result = self.qa_chain.invoke({"query": question})
+
+        answer = result["result"]
+
+        source_docs = result.get("source_documents", [])
+
+        contexts: List[str] = [
+            doc.page_content
+            for doc in source_docs
+        ]
+
+        return {
+            "answer": answer,
+            "contexts": contexts,
+        }
 
     # --------------------------------------------------
-    # Rechargement du FAISS (après rebuild)
+    # Rechargement du FAISS (admin)
     # --------------------------------------------------
     def reload(self):
         """
-        Force le rechargement du FAISS et du RAG.
-        À appeler après avoir exécuté build_faiss_index.py.
+        Force la reconstruction complète du RAG.
+        À appeler après rebuild FAISS offline.
         """
-        self.chain = None
+        self.qa_chain = None

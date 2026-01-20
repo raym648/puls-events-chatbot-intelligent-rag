@@ -1,0 +1,148 @@
+# puls-events-chatbot-intelligent-rag/.github/workflows/ci-cd.yml
+
+name: CI / CD Pipeline - RAG MLOps - Tests, Lint, Build & Deploy
+
+on:
+  push:
+    branches: [main, dev-01]
+  pull_request:
+    branches: [main, dev-01]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  rag-ci:
+    runs-on: ubuntu-latest
+
+    env:
+      # Les secrets doivent être définis dans GitHub Settings → Secrets
+      MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+      ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+
+    steps:
+    # 1️⃣ Récupération du code
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 2️⃣ Installation de Python
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    # 3️⃣ Installation des dépendances
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install ragas datasets fastapi uvicorn requests pytest
+
+    # 4️⃣ Vérification environnement
+    - name: Test environment
+      run: |
+        python scripts/test_environment.py
+
+    # 5️⃣ Tests de preprocessing data
+    - name: Test preprocessing
+      run: |
+        pytest tests/test_preprocessing.py
+
+    # 6️⃣ Test FAISS (index existant)
+    - name: Test FAISS search
+      run: |
+        python scripts/test_faiss_search.py
+
+    # 7️⃣ Test RAG local
+    - name: Test RAG chain
+      run: |
+        pytest tests/test_rag.py
+
+    # 8️⃣ Lancement API FastAPI en arrière-plan
+    - name: Start API
+      run: |
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+        sleep 5
+
+    # 9️⃣ Test fonctionnel API
+    - name: API test
+      env:
+        PYTHONPATH: .
+      run: python tests/test_api.py
+
+
+    # 🔟 Évaluation qualité RAG (Ragas)
+    - name: Run RAG evaluation
+      env:
+        PYTHONPATH: .
+      run: python tests/evaluate_rag.py
+
+    # 11️⃣ Vérification que la base FAISS est toujours cohérente
+    - name: Check FAISS files
+      run: |
+        test -f vectorstore/faiss.index
+        test -f vectorstore/faiss_store.pkl
+
+  deploy:
+    name: Deploy API and Dashboard to Hugging Face Spaces
+    runs-on: ubuntu-latest
+    needs: rag-ci
+    if: github.ref == 'refs/heads/main' && needs.rag-ci.result == 'success'
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure git
+        run: |
+          git config --global user.email "ci-bot@puls-events.example"
+          git config --global user.name "puls-events-ci-bot"
+
+      # ============================
+      # 🚀 DEPLOY TO HUGGING FACE
+      # ============================
+
+      - name: Install HuggingFace CLI
+        run: |
+          pip install huggingface_hub
+
+      - name: Login to Hugging Face
+        run: |
+          huggingface-cli login --token $HF_TOKEN
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN_03 }}
+
+      # 📦 Build HF API Space
+      - name: Prepare HF API Space
+        run: |
+          mkdir -p hf_api
+          cp -r app vectorstore data requirements.txt Dockerfile hf_api/
+
+          echo "EXPOSE 7860" >> hf_api/Dockerfile
+          sed -i 's/8000/7860/g' hf_api/Dockerfile
+
+      # 🚀 Push RAG API
+      - name: Deploy RAG API Space
+        run: |
+          huggingface-cli upload \
+            ${{ secrets.HF_USERNAME }}/rag-api \
+            hf_api \
+            --repo-type space \
+            --commit-message "Deploy RAG API 🚀"
+      
+      # 📦 Build HF Dashboard Space
+      - name: Prepare HF Dashboard Space
+        run: |
+          mkdir -p hf_dashboard
+          cp -r dashboard/* hf_dashboard/
+
+      # 🚀 Push Dashboard
+      - name: Deploy RAG Dashboard Space
+        run: |
+          huggingface-cli upload \
+            ${{ secrets.HF_USERNAME }}/rag-dashboard \
+            hf_dashboard \
+            --repo-type space \
+            --commit-message "Deploy RAG Dashboard 📊"
