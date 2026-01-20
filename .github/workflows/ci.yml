@@ -1,0 +1,67 @@
+# puls-events-chatbot-intelligent-rag/.github/workflows/ci.yml
+
+name: CI - RAG Quality & Tests
+
+on:
+  push:
+    branches: [main, dev-01]
+  pull_request:
+    branches: [main, dev-01]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    env:
+      MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+      ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ragas datasets fastapi uvicorn requests pytest
+
+      - name: Environment sanity check
+        run: python scripts/test_environment.py
+
+      - name: Test preprocessing
+        run: pytest tests/test_preprocessing.py
+
+      - name: Test FAISS index
+        run: python scripts/test_faiss_search.py
+
+      - name: Test RAG chain
+        run: pytest tests/test_rag.py
+
+      - name: Start API
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+
+      - name: API functional test
+        env:
+          PYTHONPATH: .
+        run: python tests/test_api.py
+
+      - name: RAG evaluation (Ragas)
+        env:
+          PYTHONPATH: .
+        run: python tests/evaluate_rag.py
+
+      - name: Check FAISS artifacts
+        run: |
+          test -f vectorstore/faiss.index
+          test -f vectorstore/faiss_store.pkl
