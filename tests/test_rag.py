@@ -11,8 +11,9 @@ import pickle
 # ============================================================
 
 # --- Mock langchain.chains.retrieval_qa.base -----------------
-
 fake_langchain = types.ModuleType("langchain")
+fake_langchain.verbose = False  # ✅ OBLIGATOIRE pour BaseChatModel
+
 fake_chains = types.ModuleType("langchain.chains")
 fake_retrieval_qa = types.ModuleType("langchain.chains.retrieval_qa")
 fake_retrieval_qa_base = types.ModuleType("langchain.chains.retrieval_qa.base")
