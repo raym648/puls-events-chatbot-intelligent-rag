@@ -13,7 +13,8 @@ from langchain_community.vectorstores import FAISS as LC_FAISS
 from langchain_community.docstore.in_memory import InMemoryDocstore
 from langchain_core.documents import Document
 from langchain_core.prompts import PromptTemplate
-from langchain.chains import RetrievalQA
+# from langchain.chains import RetrievalQA
+from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatResult, ChatGeneration
@@ -162,25 +163,3 @@ def build_rag_chain() -> Tuple[RetrievalQA, List[Document]]:
     )
 
     return qa_chain, documents
-
-
-# ============================================================
-# 6. API publique testable (utilisée par pytest & app)
-# ============================================================
-
-def generate_answer(question: str) -> str:
-    """
-    Génère une réponse textuelle à partir de la chaîne RAG.
-    """
-    if not question or not question.strip():
-        return ""
-
-    qa_chain, _ = build_rag_chain()
-
-    result = qa_chain.invoke({"query": question})
-
-    # RetrievalQA avec return_source_documents=True
-    if isinstance(result, dict):
-        return result.get("result", "")
-
-    return str(result)

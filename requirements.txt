@@ -1,10 +1,11 @@
 # puls-events-chatbot-intelligent-rag/requirements.txt
 
 # ===============================
-# Framework RAG
-langchain==0.2.5
-langchain-core==0.2.10
-langchain-community==0.3.27
+# LangChain (architecture RAG)
+# ===============================
+langchain==0.0.354
+langchain-community==0.0.20
+langchain-core
 
 # ===============================
 # RAG evaluation
