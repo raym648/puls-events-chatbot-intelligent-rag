@@ -10,9 +10,12 @@ import pickle
 # 1. MOCKS AVANT IMPORT (OBLIGATOIRE)
 # ============================================================
 
-# --- Mock langchain.chains.RetrievalQA -----------------------
+# --- Mock langchain.chains.retrieval_qa.base -----------------
+
 fake_langchain = types.ModuleType("langchain")
 fake_chains = types.ModuleType("langchain.chains")
+fake_retrieval_qa = types.ModuleType("langchain.chains.retrieval_qa")
+fake_retrieval_qa_base = types.ModuleType("langchain.chains.retrieval_qa.base")
 
 
 class FakeRetrievalQA:
@@ -24,11 +27,17 @@ class FakeRetrievalQA:
         return {"result": "Concerts disponibles à Paris ce mois-ci."}
 
 
-fake_chains.RetrievalQA = FakeRetrievalQA
+fake_retrieval_qa_base.RetrievalQA = FakeRetrievalQA
+
+# Hiérarchie complète
+fake_retrieval_qa.base = fake_retrieval_qa_base
+fake_chains.retrieval_qa = fake_retrieval_qa
 fake_langchain.chains = fake_chains
 
 sys.modules["langchain"] = fake_langchain
 sys.modules["langchain.chains"] = fake_chains
+sys.modules["langchain.chains.retrieval_qa"] = fake_retrieval_qa
+sys.modules["langchain.chains.retrieval_qa.base"] = fake_retrieval_qa_base
 
 
 # --- Mock faiss ----------------------------------------------
