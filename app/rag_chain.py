@@ -162,38 +162,3 @@ def build_rag_chain() -> Tuple[RetrievalQA, List[Document]]:
     )
 
     return qa_chain, documents
-
-
-# ============================================================
-# 6. API publique testable (utilisée par pytest & app)
-# ============================================================
-
-def generate_answer(question: str) -> str:
-    """
-    Génère une réponse textuelle à partir de la chaîne RAG.
-
-    En environnement CI / pytest (sans FAISS ou Mistral),
-    retourne une réponse simulée pour garantir la stabilité des tests.
-    """
-
-    if not question or not question.strip():
-        return ""
-
-    # 🧪 Mode test / CI (GitHub Actions, pytest)
-    if os.getenv("PYTEST_CURRENT_TEST") or os.getenv("CI"):
-        return (
-            "Oui, plusieurs concerts sont organisés à Paris, "
-            "avec des artistes variés et des styles musicaux différents. "
-            "Consulte la programmation pour connaître les dates exactes."
-        )
-
-    # 🚀 Mode normal (app réelle)
-    qa_chain, _ = build_rag_chain()
-
-    result = qa_chain.invoke({"query": question})
-
-    # RetrievalQA avec return_source_documents=True
-    if isinstance(result, dict):
-        return result.get("result", "")
-
-    return str(result)
