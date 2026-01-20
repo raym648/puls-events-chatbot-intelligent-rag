@@ -1,0 +1,68 @@
+# puls-events-chatbot-intelligent-rag/.github/workflows/cd.yml
+
+name: CD - Deploy RAG to Hugging Face
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN_03 }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Hugging Face Hub
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install huggingface_hub
+
+      # ============================
+      # 🚀 DEPLOY API SPACE
+      # ============================
+
+      - name: Prepare HF API Space
+        run: |
+          mkdir -p hf_api
+          cp -r app vectorstore data requirements.txt Dockerfile hf_api/
+          echo "EXPOSE 7860" >> hf_api/Dockerfile
+          sed -i 's/8000/7860/g' hf_api/Dockerfile
+
+      - name: Deploy RAG API
+        run: |
+          python -m huggingface_hub upload \
+            ${{ secrets.HF_USERNAME }}/rag-api \
+            hf_api \
+            --repo-type space \
+            --commit-message "Deploy RAG API 🚀"
+
+      # ============================
+      # 📊 DEPLOY DASHBOARD
+      # ============================
+
+      - name: Prepare HF Dashboard Space
+        run: |
+          mkdir -p hf_dashboard
+          cp -r dashboard/* hf_dashboard/
+
+      - name: Deploy RAG Dashboard
+        run: |
+          python -m huggingface_hub upload \
+            ${{ secrets.HF_USERNAME }}/rag-dashboard \
+            hf_dashboard \
+            --repo-type space \
+            --commit-message "Deploy RAG Dashboard 📊"
