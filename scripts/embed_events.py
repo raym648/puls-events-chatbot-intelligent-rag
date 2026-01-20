@@ -1,10 +1,12 @@
 # puls-events-chatbot-intelligent-rag/scripts/embed_events.py
-# ➡ Vectorisation des événements avec Mistral (version corrigée)
+# ➡ Vectorisation des événements avec Mistral (batching safe)
 
 import os
 import pandas as pd
 from mistralai.client import MistralClient
 from dotenv import load_dotenv
+from tqdm import tqdm
+
 
 # ===============================
 # Chargement des variables d’environnement
@@ -18,24 +20,29 @@ if not MISTRAL_API_KEY:
 
 client = MistralClient(api_key=MISTRAL_API_KEY)
 
+
 # ===============================
 # Chargement des événements nettoyés
 # ===============================
+
 
 df = pd.read_csv("data/cleaned_events.csv")
 
 required_columns = ["title", "description", "city", "date", "url"]
 
+
 missing = [col for col in required_columns if col not in df.columns]
+
+
 if missing:
-    raise ValueError(f"Colonnes manquantes dans cleaned_events.csv : {missing}")  # noqa: E501
+    raise ValueError(
+        f"Colonnes manquantes dans cleaned_events.csv : {missing}"
+    )
 
 # ===============================
 # Construction des textes à vectoriser
 # ===============================
-# ⚠️ IMPORTANT :
-# On inclut volontairement les dates et la ville
-# pour éviter toute hallucination temporelle côté RAG
+
 
 texts = [
     f"Titre : {row.title}\n"
@@ -45,34 +52,45 @@ texts = [
     for row in df.itertuples(index=False)
 ]
 
-print("Génération des embeddings avec Mistral...")
+print(f"Génération des embeddings avec Mistral ({len(texts)} événements)")
+
 
 # ===============================
-# Appel API Mistral
+# Batching Mistral (OBLIGATOIRE)
 # ===============================
 
-embeddings_response = client.embeddings(
-    model="mistral-embed",
-    input=texts
-)
+BATCH_SIZE = 32
+all_embeddings = []
 
+for i in tqdm(range(0, len(texts), BATCH_SIZE), desc="Embeddings"):
+    batch_texts = texts[i: i + BATCH_SIZE]
+
+    response = client.embeddings(
+        model="mistral-embed",
+        input=batch_texts
+    )
+
+    batch_embeddings = [item.embedding for item in response.data]
+    all_embeddings.extend(batch_embeddings)
+
+# ===============================
 # Vérification de cohérence
-if len(embeddings_response.data) != len(df):
-    raise RuntimeError("Nombre d’embeddings différent du nombre d’événements")
-
-# ===============================
-# Ajout des embeddings au DataFrame
 # ===============================
 
-df["embedding"] = [item.embedding for item in embeddings_response.data]
+if len(all_embeddings) != len(df):
+    raise RuntimeError(
+        f"Incohérence embeddings ({len(all_embeddings)}) "
+        f"vs événements ({len(df)})"
+    )
 
 # ===============================
 # Sauvegarde finale
 # ===============================
 
+df["embedding"] = all_embeddings
 df.to_pickle("data/cleaned_events_with_embeddings.pkl")
 
 print(
-    "Embeddings générés et sauvegardés dans "
+    "✅ Embeddings générés et sauvegardés dans "
     "data/cleaned_events_with_embeddings.pkl"
 )
