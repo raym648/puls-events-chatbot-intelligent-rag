@@ -3,9 +3,9 @@
 # ===============================
 # LangChain (architecture RAG)
 # ===============================
-langchain
+langchain==0.0.354
+langchain-community==0.0.20
 langchain-core
-langchain-community
 
 # ===============================
 # RAG evaluation
