@@ -108,12 +108,6 @@ jobs:
         run: |
           pip install huggingface_hub
 
-      - name: Login to Hugging Face
-        run: |
-          python -m huggingface_hub.cli login --token $HF_TOKEN_03
-        env:
-          HF_TOKEN_03: ${{ secrets.HF_TOKEN_03 }}
-
       # 📦 Build HF API Space
       - name: Prepare HF API Space
         run: |
@@ -125,6 +119,8 @@ jobs:
 
       # 🚀 Push RAG API
       - name: Deploy RAG API Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN_03 }}
         run: |
           huggingface-cli upload \
             ${{ secrets.HF_USERNAME }}/rag-api \
@@ -140,6 +136,8 @@ jobs:
 
       # 🚀 Push Dashboard
       - name: Deploy RAG Dashboard Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN_03 }}
         run: |
           huggingface-cli upload \
             ${{ secrets.HF_USERNAME }}/rag-dashboard \
