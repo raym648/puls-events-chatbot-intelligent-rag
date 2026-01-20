@@ -3,7 +3,7 @@
 # ===============================
 # Framework RAG
 langchain==0.2.5
-langchain-core==0.2.10
+langchain-core==0.3.81
 langchain-community==0.2.5
 
 # ===============================
