@@ -29,9 +29,9 @@ jobs:
       - name: Install Hugging Face Hub
         run: |
           python -m pip install --upgrade pip
-          python -m pip install "huggingface_hub[cli]"
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          python -m pip install huggingface_hub
 
+      
       # ===============================
       # bloc temporaire à exécuter une seule fois
       # ===============================
@@ -40,11 +40,9 @@ jobs:
             which huggingface-cli
             huggingface-cli --help
 
-
       # ============================
       # 🚀 DEPLOY API SPACE
       # ============================
-
       - name: Prepare HF API Space
         run: |
           mkdir -p hf_api
@@ -52,27 +50,46 @@ jobs:
           echo "EXPOSE 7860" >> hf_api/Dockerfile
           sed -i 's/8000/7860/g' hf_api/Dockerfile
 
-      - name: Deploy RAG API
+      - name: Deploy RAG API Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN_03 }}
         run: |
-          huggingface-cli upload \
-            ${{ secrets.HF_USERNAME }}/rag-api \
-            hf_api \
-            --repo-type space \
-            --commit-message "Deploy RAG API 🚀"
+          python <<'EOF'
+          from huggingface_hub import HfApi
+          import os
+
+          api = HfApi(token=os.environ["HF_TOKEN"])
+
+          api.upload_folder(
+              repo_id="${{ secrets.HF_USERNAME }}/rag-api",
+              repo_type="space",
+              folder_path="hf_api",
+              commit_message="Deploy RAG API 🚀"
+          )
+          EOF
 
       # ============================
       # 📊 DEPLOY DASHBOARD
       # ============================
-
       - name: Prepare HF Dashboard Space
         run: |
           mkdir -p hf_dashboard
           cp -r dashboard/* hf_dashboard/
 
-      - name: Deploy RAG Dashboard
+      - name: Deploy RAG Dashboard Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN_03 }}
         run: |
-          huggingface-cli upload \
-            ${{ secrets.HF_USERNAME }}/rag-dashboard \
-            hf_dashboard \
-            --repo-type space \
-            --commit-message "Deploy RAG Dashboard 📊"
+          python <<'EOF'
+          from huggingface_hub import HfApi
+          import os
+
+          api = HfApi(token=os.environ["HF_TOKEN"])
+
+          api.upload_folder(
+              repo_id="${{ secrets.HF_USERNAME }}/rag-dashboard",
+              repo_type="space",
+              folder_path="hf_dashboard",
+              commit_message="Deploy RAG Dashboard 📊"
+          )
+          EOF
