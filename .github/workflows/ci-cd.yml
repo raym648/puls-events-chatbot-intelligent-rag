@@ -110,7 +110,7 @@ jobs:
 
       - name: Login to Hugging Face
         run: |
-          huggingface-cli login --token $HF_TOKEN_03
+          python -m huggingface_hub.cli login --token $HF_TOKEN_03
         env:
           HF_TOKEN_03: ${{ secrets.HF_TOKEN_03 }}
 
