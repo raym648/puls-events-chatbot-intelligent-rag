@@ -2,9 +2,9 @@
 
 **Projet-7 - Concevez et déployez un système RAG**
 
-* **✍️ Auteur :** *[Raymond Francius]* 
-* **📚 Rôle :** *[Apprenant - Promotion Sept-2025]* — **Engineer AI** — **Openclassrooms**  
-* 🗓️ **Date de mise à jour :** *[14-01-2026]*
+✍️ **Auteur :** *[Raymond Francius]*    
+📚 **Rôle :** *[Apprenant - Promotion Sept-2025]* — **Engineer AI** — **Openclassrooms**   
+🗓️ **Date de mise à jour :** *[14-01-2026]*  
 
 
 ## 🎯 Objectif
