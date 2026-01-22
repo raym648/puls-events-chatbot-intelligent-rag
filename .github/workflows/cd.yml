@@ -37,7 +37,7 @@ jobs:
       - name: Prepare HF API Space
         run: |
           mkdir -p hf_api
-          cp -r app vectorstore data requirements.txt Dockerfile hf_api/
+          cp -r app vectorstore data scripts requirements.txt Dockerfile hf_api/
           echo "EXPOSE 7860" >> hf_api/Dockerfile
           sed -i 's/8000/7860/g' hf_api/Dockerfile
 
